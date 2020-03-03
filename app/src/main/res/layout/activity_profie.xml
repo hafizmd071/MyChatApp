@@ -4,6 +4,64 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ProfieActivity">
+    android:background="#000000"
+    tools:context=".ProfileActivity">
 
+    <ImageView
+        android:id="@+id/profile_activity_img_id"
+        android:layout_width="0dp"
+        android:layout_height="257dp"
+        android:src="@drawable/sample_image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/profile_activity_name_id"
+        android:layout_width="175dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="40dp"
+        android:gravity="center"
+        android:text="Name"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="@+id/profile_activity_status_id"
+        app:layout_constraintStart_toStartOf="@+id/profile_activity_status_id"
+        app:layout_constraintTop_toBottomOf="@+id/profile_activity_img_id" />
+
+    <TextView
+        android:id="@+id/profile_activity_status_id"
+        android:layout_width="161dp"
+        android:layout_height="33dp"
+        android:layout_marginTop="36dp"
+        android:gravity="center"
+        android:text="status"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/profile_activity_name_id" />
+
+    <TextView
+        android:id="@+id/profile_activity_total_friends_id"
+        android:layout_width="145dp"
+        android:layout_height="28dp"
+        android:layout_marginBottom="28dp"
+        android:gravity="center"
+        android:text="Total friends"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toTopOf="@+id/profile_activity_button_id"
+        app:layout_constraintEnd_toEndOf="@+id/profile_activity_button_id"
+        app:layout_constraintStart_toStartOf="@+id/profile_activity_button_id" />
+
+    <Button
+        android:id="@+id/profile_activity_button_id"
+        android:layout_width="247dp"
+        android:layout_height="51dp"
+        android:layout_marginBottom="96dp"
+        android:background="#FF0101"
+        android:text="send friend request"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

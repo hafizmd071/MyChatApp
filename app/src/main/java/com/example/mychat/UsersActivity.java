@@ -7,6 +7,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,12 +18,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.firebase.ui.database.SnapshotParser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.squareup.picasso.Picasso;
 
 public class UsersActivity extends AppCompatActivity {
     private Toolbar toolbar;
@@ -67,7 +71,8 @@ public class UsersActivity extends AppCompatActivity {
                             public Users parseSnapshot(@NonNull DataSnapshot snapshot) {
                                 return new Users(snapshot.child("name").getValue().toString(),
                                         snapshot.child("status").getValue().toString(),
-                                        snapshot.child("image").getValue().toString());
+                                        snapshot.child("image").getValue().toString(),
+                                        snapshot.child("thumb_image").getValue().toString());
                             }
                         })
                         .build();
@@ -84,14 +89,17 @@ public class UsersActivity extends AppCompatActivity {
 
             @Override
             protected void onBindViewHolder(ViewHolder holder, final int position, Users users) {
-                holder.setImageView(users.getImage());
+                holder.setImageView(users.getThumb_image(),getApplicationContext());
                 holder.setTextUserName(users.getUserName());
                 holder.setTextStatus(users.getStatus());
-
+                final String user_id=getRef(position).getKey();
                 holder.root.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(UsersActivity.this, String.valueOf(position), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(UsersActivity.this, String.valueOf(position), Toast.LENGTH_SHORT).show();
+                        Intent profileIntent=new Intent(UsersActivity.this,ProfileActivity.class);
+                        profileIntent.putExtra("user_id",user_id);
+                        startActivity(profileIntent);
                     }
                 });
             }
@@ -114,8 +122,8 @@ public class UsersActivity extends AppCompatActivity {
             textStatus = itemView.findViewById(R.id.status_id);
         }
 
-        public void setImageView(String string){
-            //imageView.setImage
+        public void setImageView(String string, Context context){
+            Glide.with(context).load(string).into(imageView);
         }
         public void setTextUserName(String string) {
             textUserName.setText(string);
