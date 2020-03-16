@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         toolbar=findViewById(R.id.main_activity_toolbar);
         sectionsPagerAdapter=new SectionsPagerAdapter(getSupportFragmentManager());
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("MyChat");
+        this.getSupportActionBar().setTitle("MyChat");
         viewPager.setAdapter(sectionsPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
 

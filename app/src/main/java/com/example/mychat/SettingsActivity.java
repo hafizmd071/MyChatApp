@@ -31,6 +31,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
@@ -71,23 +73,28 @@ public class SettingsActivity extends AppCompatActivity {
         currentUser= FirebaseAuth.getInstance().getCurrentUser();
         userId=currentUser.getUid();
         mDatabase= FirebaseDatabase.getInstance().getReference().child("users").child(userId);
+        mDatabase.keepSynced(true);
         mDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String name=dataSnapshot.child("name").getValue().toString();
                 String status =dataSnapshot.child("status").getValue().toString();
                 String image=dataSnapshot.child("image").getValue().toString();
-                String thumb_image =dataSnapshot.child("thumb_image").getValue().toString();
-                StorageReference storageReference=mStorageRef.child("images").child("thumbs").child(thumb_image);
+                final String thumb_image =dataSnapshot.child("thumb_image").getValue().toString();
 
                 displaName.setText(name);
                 statusText.setText(status);
                 if(!thumb_image.equals("default")){
-                   // Picasso.get().load(image).into(profileImage);
-                    // Picasso.get().load(thumb_image).into(profileImage);
-                    Glide.with(SettingsActivity.this)
-                            .load(storageReference)
-                            .into(profileImage);
+                    Picasso.get().load(thumb_image).networkPolicy(NetworkPolicy.OFFLINE).into(profileImage, new Callback() {
+                        @Override
+                        public void onSuccess() {
+
+                        }
+                        @Override
+                        public void onError(Exception e) {
+                            Picasso.get().load(thumb_image).into(profileImage);
+                        }
+                    });
                 }
             }
             @Override
@@ -124,7 +131,7 @@ public class SettingsActivity extends AppCompatActivity {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             if (resultCode == RESULT_OK) {
                 Uri resultUri = result.getUri();
-                File thumb_filepath = new File(resultUri.getPath());
+                final File thumb_filepath = new File(resultUri.getPath());
                 Bitmap compressedImage = null;
                 try {
                     compressedImage = new Compressor(this)
@@ -139,35 +146,47 @@ public class SettingsActivity extends AppCompatActivity {
             compressedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             final byte[] thumb_byte = baos.toByteArray();
             progressBar.setVisibility(View.VISIBLE);
-            StorageReference imageStorageRef = mStorageRef.child("images").child(userId + ".jpg");
+            final StorageReference imageStorageRef = mStorageRef.child("images").child(userId + ".jpg");
             final StorageReference thumb_path = mStorageRef.child("images").child("thumbs").child(userId + ".jpg");
 
             imageStorageRef.putFile(resultUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
                     if(task.isSuccessful()){
-                        final String downloadUrl = task.getResult().getStorage().getDownloadUrl().toString();
-                        UploadTask uploadTask = thumb_path.putBytes(thumb_byte);
+                        imageStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                final String downloadUrl = uri.toString();
+                                UploadTask uploadTask = thumb_path.putBytes(thumb_byte);
                                 uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                                     @Override
-                                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> thumb_task) {
-                                        final String thumb_downloadUrl=thumb_task.getResult().getStorage().getDownloadUrl().toString();
-                                        if(thumb_task.isSuccessful()){
-                                            Map<String,Object> hashMap= new HashMap<>();
-                                            hashMap.put("image",downloadUrl);
-                                            hashMap.put("thumb_image",thumb_downloadUrl);
-                                            mDatabase.updateChildren(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    progressBar.setVisibility(View.GONE);
-                                                    Toast.makeText(SettingsActivity.this, "Added to Storage.", Toast.LENGTH_SHORT).show();
+                                    public void onComplete(@NonNull final Task<UploadTask.TaskSnapshot> thumb_task) {
+                                        thumb_path.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                            @Override
+                                            public void onSuccess(Uri uri) {
+                                                final String thumb_downloadUrl=uri.toString();
+                                                if(thumb_task.isSuccessful()){
+                                                    Map<String,Object> hashMap= new HashMap<>();
+                                                    hashMap.put("image",downloadUrl);
+                                                    hashMap.put("thumb_image",thumb_downloadUrl);
+                                                    mDatabase.updateChildren(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                            progressBar.setVisibility(View.GONE);
+                                                            Toast.makeText(SettingsActivity.this, "Added to Storage.", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+                                                }else{
+                                                    Toast.makeText(SettingsActivity.this, "Failure", Toast.LENGTH_SHORT).show();
                                                 }
-                                            });
-                                        }else{
-                                            Toast.makeText(SettingsActivity.this, "Failure", Toast.LENGTH_SHORT).show();
-                                        }
+                                            }
+                                        });
+
                                     }
                                 });
+                            }
+                        });
+
                     }
                 }
             });

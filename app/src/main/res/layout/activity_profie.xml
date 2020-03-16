@@ -7,18 +7,6 @@
     android:background="#000000"
     tools:context=".ProfileActivity">
 
-    <Button
-        android:id="@+id/profile_activity_button_id2"
-        android:layout_width="247dp"
-        android:layout_height="51dp"
-        android:layout_marginBottom="44dp"
-        android:background="#FF0101"
-        android:text="decline friend request"
-        android:textColor="#FFFFFF"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <ImageView
         android:id="@+id/profile_activity_img_id"
         android:layout_width="0dp"
@@ -68,11 +56,22 @@
         android:id="@+id/profile_activity_send_button_id"
         android:layout_width="247dp"
         android:layout_height="51dp"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="48dp"
         android:background="#FF0101"
         android:text="send friend request"
         android:textColor="#FFFFFF"
-        app:layout_constraintBottom_toTopOf="@+id/profile_activity_button_id2"
+        app:layout_constraintBottom_toTopOf="@+id/decline_button_id"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/decline_button_id"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="28dp"
+        android:text="Decline Friend Request"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/profile_activity_send_button_id"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/profile_activity_send_button_id" />
 </androidx.constraintlayout.widget.ConstraintLayout>
