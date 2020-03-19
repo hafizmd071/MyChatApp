@@ -22,7 +22,9 @@ import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.firebase.ui.database.SnapshotParser;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.squareup.picasso.Picasso;
@@ -30,12 +32,16 @@ import com.squareup.picasso.Picasso;
 public class UsersActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private RecyclerView recyclerView;
+    private FirebaseAuth mAuth;
+    private DatabaseReference mUsersDatabase;
     private FirebaseRecyclerAdapter<Users, ViewHolder> adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_users);
 
+        mAuth=FirebaseAuth.getInstance();
+        mUsersDatabase=FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid());
         recyclerView=findViewById(R.id.users_recyclerview_id);
         recyclerView.hasFixedSize();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -50,12 +56,16 @@ public class UsersActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         adapter.startListening();
+        mUsersDatabase.child("online").setValue(true);
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         adapter.stopListening();
+        mUsersDatabase.child("online").setValue(false);
+
     }
 
     private void fetch() {

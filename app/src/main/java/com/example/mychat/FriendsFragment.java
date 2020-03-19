@@ -24,9 +24,12 @@ import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.firebase.ui.database.SnapshotParser;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 
 /**
@@ -35,11 +38,12 @@ import com.google.firebase.database.Query;
 public class FriendsFragment extends Fragment {
 
     private FirebaseAuth mAuth;
-    private DatabaseReference mFriendDatabase;
+    private DatabaseReference mFriendsDatabase, mUsersDatabase;
     private String current_user_id;
     private RecyclerView mFriendList;
-
     private View mMainView;
+    private FirebaseRecyclerAdapter<Friends, FriendsFragment.FriendsViewHolder> adapter;
+
     public FriendsFragment() {
         // Required empty public constructor
     }
@@ -49,12 +53,12 @@ public class FriendsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        mMainView= inflater.inflate(R.layout.fragment_friends, container, false);
-        mFriendList=mMainView.findViewById(R.id.friend_list_recyclerview_id);
-        mAuth=FirebaseAuth.getInstance();
-        current_user_id=mAuth.getCurrentUser().getUid();
-        mFriendDatabase=FirebaseDatabase.getInstance().getReference().child("Friends").child(current_user_id);
-
+        mMainView = inflater.inflate(R.layout.fragment_friends, container, false);
+        mFriendList = mMainView.findViewById(R.id.friend_list_recyclerview_id);
+        mAuth = FirebaseAuth.getInstance();
+        current_user_id = mAuth.getCurrentUser().getUid();
+        mFriendsDatabase = FirebaseDatabase.getInstance().getReference().child("Friends").child(current_user_id);
+        mUsersDatabase = FirebaseDatabase.getInstance().getReference().child("users");
         mFriendList.setHasFixedSize(true);
         mFriendList.setLayoutManager(new LinearLayoutManager(getContext()));
         return mMainView;
@@ -63,25 +67,12 @@ public class FriendsFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        Query query = FirebaseDatabase.getInstance()
-                .getReference()
-                .child("Friends").child(current_user_id);
 
-        FirebaseRecyclerOptions<Friends > options =
-                new FirebaseRecyclerOptions.Builder<Friends>()
-                        .setQuery(query, new SnapshotParser<Friends >() {
-                            @NonNull
-                            @Override
-                            public Friends  parseSnapshot(@NonNull DataSnapshot snapshot) {
-                                return new Friends (snapshot.child("name").getValue().toString(),
-                                        snapshot.child("status").getValue().toString(),
-                                        snapshot.child("image").getValue().toString(),
-                                        snapshot.child("thumb_image").getValue().toString());
-                            }
-                        })
-                        .build();
+        FirebaseRecyclerOptions<Friends> options = new FirebaseRecyclerOptions.Builder<Friends>()
+                .setQuery(mFriendsDatabase, Friends.class)
+                .build();
 
-        FirebaseRecyclerAdapter<Friends, FriendsFragment.FriendsViewHolder> adapter = new FirebaseRecyclerAdapter<Friends, FriendsFragment.FriendsViewHolder>(options) {
+        adapter = new FirebaseRecyclerAdapter<Friends, FriendsFragment.FriendsViewHolder>(options) {
             @Override
             public FriendsFragment.FriendsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 View view = LayoutInflater.from(parent.getContext())
@@ -92,52 +83,85 @@ public class FriendsFragment extends Fragment {
 
 
             @Override
-            protected void onBindViewHolder(FriendsFragment.FriendsViewHolder holder, final int position, Friends friends) {
-                holder.setImageView(friends.getThumb_image(),getContext());
-                holder.setTextUserName(friends.getUserName());
-                holder.setTextStatus(friends.getStatus());
-                final String user_id=getRef(position).getKey();
-                holder.root.setOnClickListener(new View.OnClickListener() {
+            protected void onBindViewHolder(final FriendsFragment.FriendsViewHolder holder, final int position, final Friends friends) {
+                final String list_user_id = getRef(position).getKey();
+                mUsersDatabase.child(list_user_id).addValueEventListener(new ValueEventListener() {
                     @Override
-                    public void onClick(View view) {
-                        //Toast.makeText(Friends Activity.this, String.valueOf(position), Toast.LENGTH_SHORT).show();
-                        Intent profileIntent=new Intent(getActivity(), ProfileActivity.class);
-                        profileIntent.putExtra("user_id",user_id);
-                        startActivity(profileIntent);
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        String username = dataSnapshot.child("name").getValue().toString();
+                        String status = dataSnapshot.child("status").getValue().toString();
+                        String thumb_image = dataSnapshot.child("thumb_image").getValue().toString();
+//                        if(dataSnapshot.hasChild("online")){
+//                            Boolean online= (Boolean) dataSnapshot.child("online").getValue();
+//                            holder.setOnline(online);
+//                        }
+                        holder.setTextUserName(username);
+                        holder.setTextStatus(status);
+
+                        if (!thumb_image.equals("default")) {
+                            Picasso.get().load(thumb_image).placeholder(R.mipmap.ic_launcher_round).into(holder.imageView);
+                        }
+                        holder.root.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                //Toast.makeText(Friends Activity.this, String.valueOf(position), Toast.LENGTH_SHORT).show();
+                                Intent profileIntent = new Intent(getActivity(), ProfileActivity.class);
+                                profileIntent.putExtra("user_id", list_user_id);
+                                startActivity(profileIntent);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
                     }
                 });
+
             }
 
         };
         mFriendList.setAdapter(adapter);
-
+        adapter.startListening();
     }
 
-    public static class FriendsViewHolder extends RecyclerView.ViewHolder{
+    @Override
+    public void onStop() {
+        super.onStop();
+        adapter.stopListening();
+    }
+
+    public static class FriendsViewHolder extends RecyclerView.ViewHolder {
 
         public LinearLayout root;
-        public ImageView imageView;
+        public ImageView imageView,onlineImageView;
         public TextView textUserName;
         public TextView textStatus;
 
         public FriendsViewHolder(View itemView) {
             super(itemView);
             root = itemView.findViewById(R.id.root_id);
-            imageView=itemView.findViewById(R.id.circleImageView_id);
+            imageView = itemView.findViewById(R.id.circleImageView_id);
             textUserName = itemView.findViewById(R.id.user_name_id);
             textStatus = itemView.findViewById(R.id.status_id);
+            onlineImageView=itemView.findViewById(R.id.online_imageView_id);
         }
 
-        public void setImageView(String string, Context context){
-            Glide.with(context).load(string).into(imageView);
-        }
         public void setTextUserName(String string) {
             textUserName.setText(string);
         }
 
-
         public void setTextStatus(String string) {
             textStatus.setText(string);
+        }
+
+
+        public void setOnline(Boolean online) {
+            if(online==true){
+                onlineImageView.setVisibility(View.VISIBLE);
+            }else{
+                onlineImageView.setVisibility(View.INVISIBLE);
+            }
         }
     }
 }

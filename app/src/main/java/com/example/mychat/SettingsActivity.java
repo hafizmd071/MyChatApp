@@ -48,13 +48,14 @@ import id.zelory.compressor.Compressor;
 public class SettingsActivity extends AppCompatActivity {
     private static final int MAX_LENGTH =10;
     private FirebaseUser currentUser;
-    private DatabaseReference mDatabase;
+    private DatabaseReference mDatabase,mUsersDatabase;
     private ImageView profileImage;
     private TextView displaName,statusText;
     private Button changeImageButton,changeStatusButton;
     private StorageReference mStorageRef;
     private String userId;
     private ProgressBar progressBar;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +65,8 @@ public class SettingsActivity extends AppCompatActivity {
         progressBar=findViewById(R.id.imageloader_progressbar_id);
         progressBar.setVisibility(View.GONE);
 
+        mAuth=FirebaseAuth.getInstance();
+        mUsersDatabase=FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid());
         mStorageRef = FirebaseStorage.getInstance().getReference();
         profileImage=findViewById(R.id.profile_image_id);
         displaName=findViewById(R.id.display_name_id);
@@ -122,6 +125,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mUsersDatabase.child("online").setValue(true);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mUsersDatabase.child("online").setValue(false);
     }
 
     @Override

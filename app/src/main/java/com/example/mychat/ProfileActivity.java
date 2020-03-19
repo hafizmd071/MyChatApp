@@ -202,11 +202,11 @@ public class ProfileActivity extends AppCompatActivity {
                     });
                 }
                 else if(current_state.equals("req_received")){
-                    final String date= DateFormat.getDateInstance().format(new Date());
-                    friendDatabase.child(current_user.getUid()).child(user_id).setValue(date).addOnSuccessListener(new OnSuccessListener<Void>() {
+                    final String date= DateFormat.getDateTimeInstance().format(new Date());
+                    friendDatabase.child(current_user.getUid()).child(user_id).child("date").setValue(date).addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            friendDatabase.child(user_id).child(current_user.getUid()).setValue(date).addOnSuccessListener(new OnSuccessListener<Void>() {
+                            friendDatabase.child(user_id).child(current_user.getUid()).child("date").setValue(date).addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
                                     friendReqDatabase.child(current_user.getUid()).child(user_id).removeValue().addOnSuccessListener(new OnSuccessListener<Void>() {
